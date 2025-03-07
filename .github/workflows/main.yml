@@ -1,0 +1,56 @@
+name: Selenium Test CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  selenium-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up PHP and Start Server
+        run: |
+          sudo apt update
+          sudo apt install -y php php-cli php-mysql
+          php -S 127.0.0.1:8000 -t . &  # Jalankan server PHP di root proyek
+          sleep 10  # Tunggu 10 detik agar server siap
+
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium webdriver-manager pytest
+
+      - name: Start Selenium WebDriver (Chrome)
+        run: |
+          sudo apt update
+          sudo apt install -y google-chrome-stable
+
+      - name: Run Selenium Tests
+        run: python test.py
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-test-results
+          path: test-results/
+
+      - name: Upload Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-test-logs
+          path: test-results/test_log.txt
